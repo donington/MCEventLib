@@ -10,61 +10,43 @@ public class ListenerList {
 
 	private static ArrayList<ListenerList> allListeners = new ArrayList<ListenerList>();
 
-	private final short busID;
 	private ListenerListInstance list;
 
 
-	public ListenerList(short id) {
-		this(id, null);
+	public ListenerList() {
+		this(null);
 	}
 
 
-/*
-	public ListenerList(short id, Class eventCurrent, Class eventParent) {
-		busID = id;
-		allListeners.add(this);
-
-		if      ( eventCurrent == null )
-			BukkitEventPort.debug("new ListenerList(%i, null, %s)", busID, eventParent.getSimpleName());
-		else if ( eventParent == null )
-			BukkitEventPort.debug("new ListenerList(%i, %s, null)", busID, eventCurrent.getSimpleName());
-		else
-			BukkitEventPort.debug("new ListenerList(%i, current, parent)", busID, eventCurrent.getSimpleName(), eventParent.getSimpleName());
-	}
- */
-
-
-	public ListenerList(short id, ListenerList parentList) {
-		busID = id;
+	public ListenerList(ListenerList parentList) {
+		// TODO: parentList handling
 		allListeners.add(this);
 
 		if ( parentList == null ) {
-			BukkitEventPort.debug("new ListenerList(%i, null)", busID);
+			BukkitEventPort.debug("new ListenerList(null)");
 			list = new ListenerListInstance();
 		} else {
-			BukkitEventPort.debug("new ListenerList(%i, %x)", busID, parentList.hashCode());
+			BukkitEventPort.debug("new ListenerList(parentList[%x])", parentList.hashCode());
 			list = new ListenerListInstance(parentList.list);
 		}
 	}
 
 
-	public void register(int id, EventPriority priority, EventListener listener) {
-		if ( id != busID ) return;
+	public void register(EventPriority priority, EventListener listener) {
 
 		list.register(priority, listener);
 	}
 
 
-	public void unregister(int id, EventListener listener) {
-		if ( id != busID ) return;
+	public void unregister(EventListener listener) {
 
 		list.unregister(listener);
 	}
 
 
-	public static void unregisterListener(int id, EventListener listener) {
+	public static void unregisterListener(EventListener listener) {
 		for (ListenerList list : allListeners)
-			list.unregister(id, listener);
+			list.unregister(listener);
 	}
 
 

@@ -15,8 +15,6 @@ public abstract class Event {
 	// events without a proper parent event will fall back to this
 	protected static ListenerList listenerList = null;
 
-	private final short busID;
-
 	private final boolean isCancellable;
 	private final boolean hasResult;  // cancellable events always have a result
 	private final boolean ignoreCancel;
@@ -25,46 +23,13 @@ public abstract class Event {
 	private Result result = Result.DEFAULT;
 
 
-	/*
-	private Annotation getAnnotationByClass(Class clazz, Class annotazion) {
-		Annotation annotation = null;
-
-		if ( clazz.isAnnotationPresent(annotazion) ) try {
-			annotation = clazz.getAnnotation(annotazion);
-		} catch ( Exception e ) {};  // silently catch error
-
-		if ( annotation == null ) {
-			BukkitEventPort.debug("%s: error: annotation not found", clazz.getSimpleName());
-			return null;
-		}
-
-		return(annotation);
-	}
-
-
-	private Short getAnnotationShort(Annotation annotation, String field) {
-		Class annotazion = annotation.getClass();
-		Short value = null;
-
-		try {
-			value = (Short) annotazion.getField(field).getShort(annotation);
-		} catch (Exception e) {
-			BukkitEventPort.debug("%s: error: annotation does not contain field '%s'", annotazion.getSimpleName(), field);
-		}
-
-		return value;
-	}
-   */
-
-
-	public Event(short id) {
+	public Event() {
 		Class clazz = this.getClass();
+		BukkitEventPort.debug("%s: initializing event", clazz.getSimpleName());
 
-		busID = id;
 		isCancellable = clazz.isAnnotationPresent(Cancellable.class);
 		hasResult = clazz.isAnnotationPresent(HasResult.class) || this.isCancellable;
 		ignoreCancel = false;
-		BukkitEventPort.debug("%s: event initialized with busID=%i", clazz.getSimpleName(), busID);
 	}
 
 
@@ -138,7 +103,7 @@ public abstract class Event {
 
 
 	public void register(ASMEventHandler listener) {
-		this.listenerList.register(getBusID(), listener.getPriority(), listener);
+		this.listenerList.register(listener.getPriority(), listener);
 	}
 
 
@@ -148,11 +113,6 @@ public abstract class Event {
 	 */
 	public EventListener[] getListeners() {
 		return this.listenerList.getListeners();
-	}
-
-
-	public short getBusID() {
-		return busID;
 	}
 
 }

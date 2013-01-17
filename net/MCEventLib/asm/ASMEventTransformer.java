@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import net.MCEventLib.EventBus.Event;
-import net.MCEventLib.EventBus.EventBusRegistry;
 import net.MCEventLib.EventBus.ListenerList;
 import net.MCEventLib.annotation.EventBus;
 import net.MCEventLib.annotation.EventParent;
@@ -32,7 +31,7 @@ public class ASMEventTransformer implements IClassTransformer
 	@Override
 	public byte[] transform(String name, byte[] bytes) {
 		// TODO: fix these locations to something within MCEventLib & make it extendible
-		if ( !name.startsWith("net.event.") && !name.endsWith("Event") )
+		if ( !name.startsWith("net.event.") || !name.endsWith("Event") )
 			return bytes;
 
 		ClassReader cr = new ClassReader(bytes);
@@ -60,13 +59,13 @@ public class ASMEventTransformer implements IClassTransformer
 			return null;
 
 		// if not a potential eventBus, scan for <init>;  abort if found
-		if ( !eventSuper.equals(Event.class) )
-		for ( MethodNode method : (List<MethodNode>)eventNode.methods ) {
-			if ( method.name.equals("<init>") && method.desc.equals(Type.getMethodDescriptor(VOID_TYPE)) ) { 
-				BukkitEventPort.debug("%s: detected <init>;  aborting", eventSuper.getSimpleName());
-				return null;
-			}
-		}
+//		if ( !eventSuper.equals(Event.class) )
+//		for ( MethodNode method : (List<MethodNode>)eventNode.methods ) {
+//			if ( method.name.equals("<init>") && method.desc.equals(Type.getMethodDescriptor(VOID_TYPE)) ) { 
+//				BukkitEventPort.debug("%s: detected <init>;  aborting", eventSuper.getSimpleName());
+//				return null;
+//			}
+//		}
 
 		return eventSuper;
 	}
@@ -142,47 +141,35 @@ public class ASMEventTransformer implements IClassTransformer
 			BukkitEventPort.debug("buildEvent(): event is an @EventBus root");
 
 		FieldNode listenerList = new FieldNode(ACC_PROTECTED | ACC_STATIC, "listenerList", tList.getDescriptor(), null, null);
-		LabelNode doneLabel = new LabelNode();
-
 		eventNode.fields.add(listenerList);
+
+		LabelNode doneLabel = new LabelNode();
 
 		MethodNode method = new MethodNode(ASM4, ACC_PUBLIC, "<init>", getMethodDescriptor(Type.VOID_TYPE), null, null);
 		InsnList asm = method.instructions;
 
 		/** begin super() invocation */
 		asm.add(new VarInsnNode(ALOAD, 0));
-
-		if ( !isEventBus ) { // is an EventBus node
-			/** super() */
-			asm.add(new MethodInsnNode(INVOKESPECIAL, tSuper.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE)));
-		}
-		else {  // not an EventBus node
-			/** super(EventBusRegistry.getNewEventBus()) */
-			Type tRegistry = Type.getType(EventBusRegistry.class);
-			Type tShort = Type.getType(Short.class);
-			asm.add(new MethodInsnNode(INVOKESTATIC, tRegistry.getInternalName(), "getNewEventBus", getMethodDescriptor(tShort)));
-			asm.add(new MethodInsnNode(INVOKEVIRTUAL, tShort.getInternalName(), "shortValue", getMethodDescriptor(Type.SHORT_TYPE)));
-			asm.add(new MethodInsnNode(INVOKESPECIAL, tSuper.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE, Type.SHORT_TYPE)));
-		}
-		asm.add(new FieldInsnNode(GETSTATIC, eventNode.name, listenerList.name, listenerList.desc));
-		asm.add(new JumpInsnNode(IFNONNULL, doneLabel));
+		asm.add(new MethodInsnNode(INVOKESPECIAL, tSuper.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE)));
 		/** end super() invocation */
 
 		/** begin listenerList initialization */
-		/** if ( listenerList != null ) */
+		// if ( listenerList != null ) goto doneLabel
+		asm.add(new FieldInsnNode(GETSTATIC, eventNode.name, listenerList.name, listenerList.desc));
+		asm.add(new JumpInsnNode(IFNONNULL, doneLabel));
+
+		// listenerList = new ListenerList(?)
 		asm.add(new TypeInsnNode(NEW, tList.getInternalName()));
 		asm.add(new InsnNode(DUP));
-		asm.add(new VarInsnNode(ALOAD, 0));
-		asm.add(new MethodInsnNode(INVOKEVIRTUAL, eventNode.name, "getBusID", getMethodDescriptor(Type.SHORT_TYPE)));
 
 		if ( !isEventBus && ( eventParent != null ) ) {
-		  /**   listenerList = new ListenerList(getBusID(), parent.listenerList); */
+		  // listenerList = new ListenerList(parent.listenerList);
 			Type tParent = Type.getType(eventParent);
 			asm.add(new FieldInsnNode(GETSTATIC, tParent.getInternalName(), listenerList.name, listenerList.desc));
-			asm.add(new MethodInsnNode(INVOKESPECIAL, tList.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE, Type.SHORT_TYPE, tList)));
+			asm.add(new MethodInsnNode(INVOKESPECIAL, tList.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE, tList)));
 		} else {
-		  /**   listenerList = new ListenerList(getBusID()); */
-			asm.add(new MethodInsnNode(INVOKESPECIAL, tList.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE, Type.SHORT_TYPE)));
+		  // listenerList = new ListenerList();
+			asm.add(new MethodInsnNode(INVOKESPECIAL, tList.getInternalName(), "<init>", getMethodDescriptor(Type.VOID_TYPE)));
 		}
 		asm.add(new FieldInsnNode(PUTSTATIC, eventNode.name, listenerList.name, listenerList.desc));
 		/** end listenerList initialization */
@@ -206,8 +193,10 @@ public class ASMEventTransformer implements IClassTransformer
 		asm.add(new MethodInsnNode(INVOKESTATIC, "donington/BukkitEventPort/BukkitEventPort", "debug",  "(Ljava/lang/String;[Ljava/lang/Object;)V"));
 		/** end print debugging info */
 
-		// finish and add method
+		/** method finished */
 		method.instructions.add(new InsnNode(RETURN));
+		/** method finished */
+
 		eventNode.methods.add(method);
 		BukkitEventPort.debug("%s: injected <init>", eventNode.name);
 		return true;
