@@ -3,12 +3,9 @@ package net.MCEventLib.EventBus;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
+import net.MCEventLib.MCEventLib;
 import net.MCEventLib.annotation.Cancellable;
 import net.MCEventLib.annotation.HasResult;
-
-
-import donington.BukkitEventPort.ASMEventHandler;
-import donington.BukkitEventPort.BukkitEventPort;
 
 
 public abstract class Event {
@@ -25,7 +22,7 @@ public abstract class Event {
 
 	public Event() {
 		Class clazz = this.getClass();
-		BukkitEventPort.debug("%s: initializing event", clazz.getSimpleName());
+		MCEventLib.debug("%s: initializing event", clazz.getSimpleName());
 
 		isCancellable = clazz.isAnnotationPresent(Cancellable.class);
 		hasResult = clazz.isAnnotationPresent(HasResult.class) || this.isCancellable;
@@ -58,7 +55,7 @@ public abstract class Event {
 	public boolean setCancelled(boolean state) {
 		if (!this.isCancellable()) {
 			StackTraceElement[] stack = new Throwable().getStackTrace();
-			BukkitEventPort.warning("%s: event cannot be cancelled", stack[0].getMethodName());
+			MCEventLib.warning("%s: event cannot be cancelled", stack[0].getMethodName());
 			return false;
 		}
 		cancelled = state;
@@ -94,7 +91,7 @@ public abstract class Event {
 	public boolean setResult(Result state) {
 		if (!this.hasResult()) {
 			StackTraceElement[] stack = new Throwable().getStackTrace();
-			BukkitEventPort.warning("%s: event has no result", stack[0].getMethodName());
+			MCEventLib.warning("%s: event has no result", stack[0].getMethodName());
 			return false;
 		}
 		this.result = state == null ? Result.DEFAULT : state;

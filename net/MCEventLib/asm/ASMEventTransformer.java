@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import net.MCEventLib.MCEventLib;
 import net.MCEventLib.EventBus.Event;
 import net.MCEventLib.EventBus.ListenerList;
 import net.MCEventLib.annotation.EventBus;
@@ -16,10 +17,7 @@ import org.objectweb.asm.tree.*;
 import static org.objectweb.asm.Opcodes.*;
 import static org.objectweb.asm.Type.*;
 import static org.objectweb.asm.ClassWriter.*;
-
-
 import cpw.mods.fml.relauncher.IClassTransformer;
-import donington.BukkitEventPort.BukkitEventPort;
 
 
 public class ASMEventTransformer implements IClassTransformer
@@ -100,7 +98,7 @@ public class ASMEventTransformer implements IClassTransformer
 			while ( !ancestor.equals(Event.class) ) {
 				// validate superclass hierarchy as we scan
 				if ( !Event.class.isAssignableFrom(ancestor) ) {
-					BukkitEventPort.debug("%s: error: Event chain corrupted by member: '%s'", eventNode.name, ancestor.getSimpleName());
+					MCEventLib.debug("%s: error: Event chain corrupted by member: '%s'", eventNode.name, ancestor.getSimpleName());
 					return false;
 				}
 
@@ -119,7 +117,7 @@ public class ASMEventTransformer implements IClassTransformer
 		if ( !isEventBus ) {
 			// require eventBusRoot to have @EventBus annotation
 			if ( !eventBusRoot.isAnnotationPresent(EventBus.class) ) {
-				BukkitEventPort.debug("%s: missing annotation '@EventBus'", eventBusRoot.getSimpleName());
+				MCEventLib.debug("%s: missing annotation '@EventBus'", eventBusRoot.getSimpleName());
 				return false;
 			}
 
@@ -132,13 +130,13 @@ public class ASMEventTransformer implements IClassTransformer
 		Type tSuper = Type.getType(eventSuper);
 		Type tList = Type.getType(ListenerList.class);
 
-		BukkitEventPort.debug("buildEvent(): event  := '%s'", eventNode.name.replace('/', '.'));
-		BukkitEventPort.debug("buildEvent(): super  := '%s'", eventSuper.getCanonicalName());
+		MCEventLib.debug("buildEvent(): event  := '%s'", eventNode.name.replace('/', '.'));
+		MCEventLib.debug("buildEvent(): super  := '%s'", eventSuper.getCanonicalName());
 		if ( !isEventBus ) {
-			BukkitEventPort.debug("buildEvent(): bus    := '%s'", eventBusRoot.getCanonicalName());
-			BukkitEventPort.debug("buildEvent(): parent := '%s'", eventParent.getCanonicalName());
+			MCEventLib.debug("buildEvent(): bus    := '%s'", eventBusRoot.getCanonicalName());
+			MCEventLib.debug("buildEvent(): parent := '%s'", eventParent.getCanonicalName());
 		} else
-			BukkitEventPort.debug("buildEvent(): event is an @EventBus root");
+			MCEventLib.debug("buildEvent(): event is an @EventBus root");
 
 		FieldNode listenerList = new FieldNode(ACC_PROTECTED | ACC_STATIC, "listenerList", tList.getDescriptor(), null, null);
 		eventNode.fields.add(listenerList);
@@ -190,7 +188,7 @@ public class ASMEventTransformer implements IClassTransformer
 		asm.add(new MethodInsnNode(INVOKEVIRTUAL, "java/lang/Object", "hashCode", "()I"));
 		asm.add(new MethodInsnNode(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;"));
 		asm.add(new InsnNode(AASTORE));
-		asm.add(new MethodInsnNode(INVOKESTATIC, "donington/BukkitEventPort/BukkitEventPort", "debug",  "(Ljava/lang/String;[Ljava/lang/Object;)V"));
+		asm.add(new MethodInsnNode(INVOKESTATIC, "net/MCEventLib/MCEventLib", "debug",  "(Ljava/lang/String;[Ljava/lang/Object;)V"));
 		/** end print debugging info */
 
 		/** method finished */
@@ -198,7 +196,7 @@ public class ASMEventTransformer implements IClassTransformer
 		/** method finished */
 
 		eventNode.methods.add(method);
-		BukkitEventPort.debug("%s: injected <init>", eventNode.name);
+		MCEventLib.debug("%s: injected <init>", eventNode.name);
 		return true;
 	}
 

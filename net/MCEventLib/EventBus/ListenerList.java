@@ -1,9 +1,8 @@
-// ported from forge for BukkitEventPort internal use
 package net.MCEventLib.EventBus;
 
 import java.util.ArrayList;
 
-import donington.BukkitEventPort.BukkitEventPort;
+import net.MCEventLib.MCEventLib;
 
 
 public class ListenerList {
@@ -23,10 +22,10 @@ public class ListenerList {
 		allListeners.add(this);
 
 		if ( parentList == null ) {
-			BukkitEventPort.debug("new ListenerList(null)");
+			MCEventLib.debug("new ListenerList(null)");
 			list = new ListenerListInstance();
 		} else {
-			BukkitEventPort.debug("new ListenerList(parentList[%x])", parentList.hashCode());
+			MCEventLib.debug("new ListenerList(parentList[%x])", parentList.hashCode());
 			list = new ListenerListInstance(parentList.list);
 		}
 	}
