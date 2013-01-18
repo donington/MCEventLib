@@ -3,7 +3,7 @@ package net.MCEventLib;
 import java.util.Arrays;
 import java.util.logging.Logger;
 
-import net.MCEventLib.util.DebugLogLevel;
+import net.MCEventLib.util.CustomLogLevel;
 import net.MCEventLib.util.StringFormat;
 import net.minecraftforge.common.Configuration;
 
@@ -36,6 +36,8 @@ public class MCEventLib extends DummyModContainer {
 //    meta.url         = "";
 //    meta.updateUrl   = "";
 //    meta.logoFile    = "/net/MCEventLib/resources/logo.png";
+
+		log.setParent(Logger.getLogger("ForgeModLoader"));
 	}
 
 
@@ -47,11 +49,6 @@ public class MCEventLib extends DummyModContainer {
 		config.save();
 	}
 
-
-	@Subscribe
-	public void init(FMLInitializationEvent event) {
-		log.setParent(Logger.getLogger("ForgeModLoader"));
-	}
 
 	// fake forge event bus registration so the mod is detected as enabled.
 	// this is a library mod which should be present for other mods that require it.
@@ -69,12 +66,12 @@ public class MCEventLib extends DummyModContainer {
 
 
 	public static void error(String fmt, Object... args) {
-		log.warning(StringFormat.strformat(fmt, args));
+		log.log(CustomLogLevel.ERROR, StringFormat.strformat(fmt, args));
 	}
 
 
 	public static void debug(String fmt, Object... args) {
-		log.log(DebugLogLevel.DEBUG, StringFormat.strformat(fmt, args));
+		log.log(CustomLogLevel.DEBUG, StringFormat.strformat(fmt, args));
 	}
 
 }

@@ -22,10 +22,10 @@ public class ListenerList {
 		allListeners.add(this);
 
 		if ( parentList == null ) {
-			MCEventLib.debug("new ListenerList(null)");
+//			MCEventLib.debug("new ListenerList(null)");
 			list = new ListenerListInstance();
 		} else {
-			MCEventLib.debug("new ListenerList(parentList[%x])", parentList.hashCode());
+//			MCEventLib.debug("new ListenerList(parentList[%x])", parentList.hashCode());
 			list = new ListenerListInstance(parentList.list);
 		}
 	}
